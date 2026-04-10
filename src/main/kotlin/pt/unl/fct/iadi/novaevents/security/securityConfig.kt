@@ -3,6 +3,7 @@ package pt.unl.fct.iadi.novaevents.security
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.http.HttpMethod
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity
 import org.springframework.security.config.http.SessionCreationPolicy
@@ -19,6 +20,7 @@ import pt.unl.fct.iadi.novaevents.service.AppUserDetailsManager
 
 @Configuration
 @EnableWebSecurity
+@EnableMethodSecurity
 class SecurityConfig (
     private val jwtCookieAuthFilter     : JwtCookieAuthFilter,
     private val appUserRepository: UserRepository,
@@ -30,56 +32,43 @@ class SecurityConfig (
     @Bean
     fun userDetailsService(encoder: PasswordEncoder) = AppUserDetailsManager(appUserRepository)
     @Bean
+
     fun securityFilterChain(http: HttpSecurity): SecurityFilterChain {
         http
-            .csrf { it.disable() }
+            .sessionManagement { it.sessionCreationPolicy(SessionCreationPolicy.STATELESS) }
+            .securityContext { it.securityContextRepository(RequestAttributeSecurityContextRepository()) }
+            .csrf { csrf ->
+                csrf.csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
+                csrf.csrfTokenRequestHandler(CsrfTokenRequestAttributeHandler())
+            }
             .authorizeHttpRequests { auth ->
                 auth
-                    .requestMatchers(HttpMethod.GET, "/posts", "/posts/**").permitAll()
-                    .requestMatchers(HttpMethod.POST, "/posts").hasAnyRole("EDITOR", "ADMIN")
-                    .requestMatchers(HttpMethod.PUT, "/posts/**").hasAnyRole("EDITOR", "ADMIN")
-                    .requestMatchers(HttpMethod.DELETE, "/posts/**").hasRole("ADMIN")
+                    // Públicos: leitura
+                    .requestMatchers(HttpMethod.GET, "/clubs", "/clubs/{id}").permitAll()
+                    .requestMatchers(HttpMethod.GET, "/events", "/clubs/*/events", "/clubs/*/events/{id}").permitAll()
+                    // Login page
+                    .requestMatchers("/login").permitAll()
+                    // Criar/editar eventos: EDITOR ou ADMIN
+                    .requestMatchers(HttpMethod.GET, "/clubs/*/events/new").hasAnyRole("EDITOR", "ADMIN")
+                    .requestMatchers(HttpMethod.POST, "/clubs/*/events").hasAnyRole("EDITOR", "ADMIN")
+                    .requestMatchers(HttpMethod.GET, "/clubs/*/events/*/edit").hasAnyRole("EDITOR", "ADMIN")
+                    .requestMatchers(HttpMethod.PUT, "/clubs/*/events/*").hasAnyRole("EDITOR", "ADMIN")
+                    // Apagar: ADMIN
+                    .requestMatchers(HttpMethod.GET, "/clubs/*/events/*/delete").hasRole("ADMIN")
+                    .requestMatchers(HttpMethod.DELETE, "/clubs/*/events/*").hasRole("ADMIN")
+                    // Resto: autenticado
                     .anyRequest().authenticated()
             }
-            .httpBasic {}
-            .oauth2Login { }
-
-        // form based login
-        http
-            .authorizeHttpRequests { auth ->
-                auth.anyRequest().authenticated()
-            }
-            .formLogin { }
-// cookies wirh JWT
-        http
-            .sessionManagement {
-                it.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-            }
-            .addFilterBefore(jwtCookieAuthFilter,
-                UsernamePasswordAuthenticationFilter::class.java)
-            .authorizeHttpRequests { }
             .formLogin { form ->
                 form.loginPage("/login").permitAll()
                 form.successHandler(jwtAuthSuccessHandler)
             }
+            .logout { logout ->
+                logout.logoutUrl("/logout")
+                logout.logoutSuccessUrl("/")
+                logout.deleteCookies("jwt")
+            }
+            .addFilterBefore(jwtCookieAuthFilter, UsernamePasswordAuthenticationFilter::class.java)
 
-
-        http
-            .sessionManagement {
-                it.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
-            }
-
-        http
-            .sessionManagement {
-                it.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-            }
-            .securityContext {
-                it.securityContextRepository(RequestAttributeSecurityContextRepository())
-            }
-            .csrf { csrf ->
-                csrf.csrfTokenRepository(CookieCsrfTokenRepository())
-                csrf.csrfTokenRequestHandler(CsrfTokenRequestAttributeHandler())
-            }
         return http.build()
-    }
-}
+    }}

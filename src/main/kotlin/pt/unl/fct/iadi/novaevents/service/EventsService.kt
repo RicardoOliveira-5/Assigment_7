@@ -2,10 +2,12 @@ package pt.unl.fct.iadi.novaevents.service
 
 import jakarta.persistence.EntityNotFoundException
 import org.springframework.stereotype.Service
+import pt.unl.fct.iadi.novaevents.model.AppUser
 import pt.unl.fct.iadi.novaevents.model.Event
 import pt.unl.fct.iadi.novaevents.repository.ClubRepository
 import pt.unl.fct.iadi.novaevents.repository.EventRepository
 import pt.unl.fct.iadi.novaevents.repository.EventTypeRepository
+import pt.unl.fct.iadi.novaevents.repository.UserRepository
 import java.time.LocalDate
 
 
@@ -13,6 +15,7 @@ import java.time.LocalDate
 class EventsService(
     private val eventRepository: EventRepository,
     private val clubRepository: ClubRepository,
+    private val userRepository: UserRepository,
     private val eventTypeRepository: EventTypeRepository
 ) {
     fun getEventsForClub(
@@ -42,8 +45,11 @@ class EventsService(
         typeId: Long,
         clubId: Long,
         location: String? = null,
-        description: String? = null
+        description: String? = null,
+        ownerUserName: String
     ): Event {
+        val owner = userRepository.findByUsername(ownerUserName)
+            ?:  { EntityNotFoundException("User not found") }
 
         val club = clubRepository.findById(clubId)
             .orElseThrow { EntityNotFoundException("Club not found") }
@@ -57,7 +63,8 @@ class EventsService(
             club = club,
             type = type,
             location = location,
-            description = description
+            description = description,
+            owner = owner as AppUser?
         )
 
         return eventRepository.save(event)

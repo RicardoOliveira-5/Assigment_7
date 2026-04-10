@@ -1,6 +1,6 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
-<head th:fragment="head(title)">
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"><head th:fragment="head(title)">
     <meta charset="UTF-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1"/>
     <title th:text="${title} + ' – Campus Clubs'">Campus Clubs</title>
@@ -14,6 +14,18 @@
             <a class="nav-link" th:href="@{/clubs}">Clubs</a>
             <a class="nav-link" th:href="@{/events}">Events</a>
             </div>
+        <div th:if="${#authorization.expression('isAuthenticated()')}">
+                <span id="navbar-username"
+                      class="nav-link text-white"
+                      th:text="${#authentication.name}">
+                </span>
+            <form method="post" th:action="@{/logout}" style="display:inline">
+                <input type="hidden"
+                       th:name="${_csrf.parameterName}"
+                       th:value="${_csrf.token}"/>
+                <button type="submit" class="btn btn-outline-light btn-sm">Logout</button>
+            </form>
+        </div>
     </div>
 </nav>
 <th:block th:fragment="scripts">

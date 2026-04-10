@@ -19,10 +19,6 @@ class AppUserDetailsManager(
         val user = userRepository.findByUsername(username)
             ?: throw UsernameNotFoundException(username)
 
-        val authorities = user.roles.map {
-            SimpleGrantedAuthority(it.name)
-        }
-
        return User(
            user.username, user.password,
            user.roles.map { SimpleGrantedAuthority(it.name) })
