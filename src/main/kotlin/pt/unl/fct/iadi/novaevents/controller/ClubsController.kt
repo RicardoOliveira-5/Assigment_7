@@ -22,7 +22,6 @@ class ClubsController(private val clubService: ClubsService, val eventsService: 
         model["eventsCount"] = eventsCount
         return "clubs/listClubs"
     }
-
     @GetMapping("/{id}")
     fun clubDetails(@PathVariable id: Long, model: ModelMap): String {
         val club = clubService.clubDetails(id)

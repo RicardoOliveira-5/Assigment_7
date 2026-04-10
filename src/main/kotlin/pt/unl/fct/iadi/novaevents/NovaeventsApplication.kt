@@ -1,4 +1,4 @@
-package pt.unl.fct.iadi.novaevents
+   package pt.unl.fct.iadi.novaevents
 
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.runApplication
