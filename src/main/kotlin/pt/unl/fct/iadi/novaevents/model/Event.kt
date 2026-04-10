@@ -25,7 +25,11 @@ class Event(
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "type_id")
-    var type: EventType ? = null
+    var type: EventType ? = null,
+
+    @ManyToOne()
+    var owner: AppUser ? = null
+
 
 ) {
     constructor(): this(0, "", LocalDate.now(), null, null, null, null)
