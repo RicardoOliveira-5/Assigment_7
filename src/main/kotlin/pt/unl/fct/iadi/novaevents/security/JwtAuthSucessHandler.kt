@@ -12,7 +12,6 @@ import org.springframework.stereotype.Component
 @Component
 class JwtAuthSuccessHandler(private val jwtService: JwtService) : AuthenticationSuccessHandler {
 
-    private val securityContextRepository = RequestAttributeSecurityContextRepository()
     private val requestCache = CookieRequestCache()
 
 
