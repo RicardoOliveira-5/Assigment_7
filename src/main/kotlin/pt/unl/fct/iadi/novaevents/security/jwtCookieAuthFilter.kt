@@ -13,7 +13,7 @@ import org.springframework.web.filter.OncePerRequestFilter
 @Component
 class JwtCookieAuthFilter(private val jwtService: JwtService) : OncePerRequestFilter() {
     private val securityContextRepository = RequestAttributeSecurityContextRepository()
-    /*
+
     override fun doFilterInternal(request: HttpServletRequest, response: HttpServletResponse, filterChain: FilterChain) {
         if (SecurityContextHolder.getContext().authentication == null) {
             val token = request.cookies?.find { it.name == "jwt" }?.value
@@ -33,27 +33,5 @@ class JwtCookieAuthFilter(private val jwtService: JwtService) : OncePerRequestFi
         filterChain.doFilter(request, response)
     }
 
-     */
-    override fun doFilterInternal(request: HttpServletRequest, response: HttpServletResponse, filterChain: FilterChain) {
-        val token = request.cookies?.find { it.name == "jwt" }?.value
 
-        if (token != null) {
-            val claims = jwtService.validate(token)
-
-            if (claims != null) {
-                val authorities = (claims["roles"] as List<String>)
-                    .map { SimpleGrantedAuthority(it) }
-
-                val auth = UsernamePasswordAuthenticationToken(
-                    claims["name"],
-                    null,
-                    authorities
-                )
-
-                SecurityContextHolder.getContext().authentication = auth
-            }
-        }
-
-        filterChain.doFilter(request, response)
-    }
 }
