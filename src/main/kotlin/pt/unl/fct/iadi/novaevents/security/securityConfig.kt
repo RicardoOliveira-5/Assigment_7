@@ -14,6 +14,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.security.web.context.RequestAttributeSecurityContextRepository
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository
 import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler
+import org.springframework.security.web.savedrequest.CookieRequestCache
 import pt.unl.fct.iadi.novaevents.repository.EventRepository
 import pt.unl.fct.iadi.novaevents.repository.UserRepository
 import pt.unl.fct.iadi.novaevents.service.AppUserDetailsManager
@@ -37,6 +38,7 @@ class SecurityConfig (
         http
             .sessionManagement { it.sessionCreationPolicy(SessionCreationPolicy.STATELESS) }
             .securityContext { it.securityContextRepository(RequestAttributeSecurityContextRepository()) }
+            .requestCache { it.requestCache(CookieRequestCache()) }
             .csrf { csrf ->
                 csrf.csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
                 csrf.csrfTokenRequestHandler(CsrfTokenRequestAttributeHandler())
