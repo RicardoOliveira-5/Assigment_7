@@ -14,8 +14,8 @@
             <a class="nav-link" th:href="@{/clubs}">Clubs</a>
             <a class="nav-link" th:href="@{/events}">Events</a>
             </div>
-        <div th:if="${#authorization.expression('isAuthenticated()')}">
-                <span id="navbar-username"
+        <div sec:authorize="isAuthenticated()">
+            <span id="navbar-username"
                       class="nav-link text-white"
                       th:text="${#authentication.name}">
                 </span>

@@ -71,9 +71,9 @@ class Eventscontroller(private val eventsService: EventsService, private val clu
             return "events/form"
         }
 
-        val typeId = form.type!!.toLongOrNull()
-            ?: eventsService.findTypeByName(form.type!!)?.id
-            ?: throw IllegalArgumentException("Unknown event type: ${form.type}")
+        val typeId = form.type!!.toLong()
+           // ?: eventsService.findTypeByName(form.type!!)?.id
+           // ?: throw IllegalArgumentException("Unknown event type: ${form.type}")
 
         val created = eventsService.createEvent(
             clubId = id,
@@ -86,7 +86,7 @@ class Eventscontroller(private val eventsService: EventsService, private val clu
         )
         return "redirect:/clubs/$id/events/${created.id}"
     }
-    @PreAuthorize("@eventSecurity.isOwner(#eventId, authentication) or hasRole('ADMIN')")
+    @PreAuthorize("@eventSecurity.isOwner(#eventId, authentication.name) or hasRole('ADMIN')")
     @GetMapping("/clubs/{id}/events/{eventId}/edit")
     fun showEditEventForm(@PathVariable id: Long, @PathVariable eventId: Long, model: ModelMap): String {
         val event = eventsService.findById(eventId)
@@ -112,7 +112,7 @@ class Eventscontroller(private val eventsService: EventsService, private val clu
         model["eventTypes"] = eventsService.getAllEventsTypes()
         return "events/editForm"
     }
-    @PreAuthorize("@eventSecurity.isOwner(#eventId, authentication) or hasRole('ADMIN')")
+    @PreAuthorize("@eventSecurity.isOwner(#eventId, authentication.name) or hasRole('ADMIN')")
     @PutMapping("/clubs/{id}/events/{eventId}")
     fun editEvent(
         @PathVariable id: Long,
@@ -171,13 +171,13 @@ class Eventscontroller(private val eventsService: EventsService, private val clu
         return "events/details"
     }
 
-    @PreAuthorize("@eventSecurity.isOwner(#eventId, authentication) or hasRole('ADMIN')")
+    @PreAuthorize("@eventSecurity.isOwner(#eventId, authentication.name) or hasRole('ADMIN')")
     @DeleteMapping("/clubs/{id}/events/{eventId}")
     fun deleteEvent(@PathVariable eventId: Long, @PathVariable id: Long): String {
         eventsService.deleteEvent(eventId)
         return "redirect:/clubs/$id"  // sem /events
     }
-    @PreAuthorize("@eventSecurity.isOwner(#eventId, authentication) or hasRole('ADMIN')")
+    @PreAuthorize("@eventSecurity.isOwner(#eventId, authentication.name) or hasRole('ADMIN')")
     @GetMapping("/clubs/{id}/events/{eventId}/delete")
     fun showDeleteConfirmation(
         @PathVariable eventId: Long,
