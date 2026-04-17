@@ -4,7 +4,6 @@
 <body>
 <nav th:replace="~{layout :: navbar}"></nav>
 
-
 <div class="container mt-4">
 
     <h1 class="fw-bold">New Event</h1>
@@ -57,9 +56,31 @@
         <!-- Location -->
         <div class="mb-3">
             <label for="location" class="form-label">Location</label>
-            <input type="text" id="location" class="form-control"
-                   th:field="*{location}"
-                   placeholder="Location (optional)"/>
+            <div class="input-group">
+                <input type="text" id="location" class="form-control"
+                       th:field="*{location}"
+                       th:classappend="${#fields.hasErrors('location')} ? 'is-invalid'"
+                       placeholder="Location (optional)"/>
+                <!-- Botão JS (Passo 7) -->
+                <button type="button" class="btn btn-outline-primary" id="checkWeatherJs">
+                    Check Weather JS
+                </button>
+                <!-- Botão HTMX (Passo 7) -->
+                <button type="button" class="btn btn-outline-secondary"
+                        hx-get="/api/weather"
+                        hx-include="#location"
+                        hx-vals='js:{"location": document.getElementById("location").value}'
+                        hx-headers='{"Accept": "text/html"}'
+                        hx-target="#weatherResult"
+                        hx-swap="innerHTML">
+                    Check Weather HTMX
+                </button>
+            </div>
+            <div class="invalid-feedback d-block" th:if="${#fields.hasErrors('location')}">
+                <small th:errors="*{location}"></small>
+            </div>
+            <!-- Resultado do weather check -->
+            <div id="weatherResult" class="mt-2"></div>
         </div>
 
         <!-- Description -->
@@ -76,6 +97,37 @@
     </form>
 </div>
 
+<!-- Script para o botão JS -->
+<script>
+    document.getElementById('checkWeatherJs').addEventListener('click', function () {
+        const location = document.getElementById('location').value.trim();
+        const resultDiv = document.getElementById('weatherResult');
+
+        if (!location) {
+            resultDiv.innerHTML = '<span class="text-warning">Please enter a location first.</span>';
+            return;
+        }
+
+        fetch('/api/weather?location=' + encodeURIComponent(location), {
+            headers: { 'Accept': 'application/json' }
+        })
+            .then(res => res.json())
+            .then(data => {
+                if (data.raining === true) {
+                    resultDiv.innerHTML = '<span class="badge bg-warning text-dark">Raining</span>';
+                } else if (data.raining === false) {
+                    resultDiv.innerHTML = '<span class="badge bg-success">Clear</span>';
+                } else {
+                    resultDiv.innerHTML = '<span class="text-secondary">Weather data unavailable.</span>';
+                }
+            })
+            .catch(() => {
+                resultDiv.innerHTML = '<span class="text-danger">Failed to fetch weather.</span>';
+            });
+    });
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/htmx.org@2.0.4/dist/htmx.min.js"></script>
 <th:block th:replace="~{layout :: scripts}"></th:block>
 </body>
 </html>

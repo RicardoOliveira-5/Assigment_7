@@ -14,10 +14,14 @@ import pt.unl.fct.iadi.novaevents.controller.dto.EventsResponse
 import pt.unl.fct.iadi.novaevents.model.Event
 import pt.unl.fct.iadi.novaevents.service.ClubsService
 import pt.unl.fct.iadi.novaevents.service.EventsService
+import pt.unl.fct.iadi.novaevents.service.LocationRequiredException
+import pt.unl.fct.iadi.novaevents.service.RainingAtLocationException
 import java.time.LocalDate
-
 @Controller
-class Eventscontroller(private val eventsService: EventsService, private val clubService: ClubsService) {
+class Eventscontroller(
+    private val eventsService: EventsService,
+    private val clubService: ClubsService
+) {
 
     @GetMapping("/events")
     fun allEvents(
@@ -27,7 +31,7 @@ class Eventscontroller(private val eventsService: EventsService, private val clu
         @RequestParam(required = false) end: LocalDate?,
         model: ModelMap
     ): String {
-        val typeId =  type?.let { eventsService.findTypeByName(it)?.id }
+        val typeId = type?.let { eventsService.findTypeByName(it)?.id }
         val events = eventsService.getEventsForClub(typeId, clubId, start, end).map {
             EventsResponse(
                 id = it.id,
@@ -42,6 +46,7 @@ class Eventscontroller(private val eventsService: EventsService, private val clu
         model["events"] = events
         return "events/listEvents"
     }
+
     @GetMapping("/clubs/{id}/events/new")
     fun showCreateEventForm(@PathVariable id: Long, model: ModelMap): String {
         val club = clubService.clubDetails(id)
@@ -59,33 +64,46 @@ class Eventscontroller(private val eventsService: EventsService, private val clu
         model: ModelMap,
         authentication: Authentication
     ): String {
-        if (bindingResult.hasErrors()) {
+
+        fun reRenderForm(): String {
             model["club"] = clubService.clubDetails(id)
             model["eventTypes"] = eventsService.getAllEventsTypes()
             return "events/form"
         }
+
+        if (bindingResult.hasErrors()) return reRenderForm()
+
         if (eventsService.nameExists(form.name!!)) {
             bindingResult.rejectValue("name", "duplicate", "An event with this name already exists")
-            model["club"] = clubService.clubDetails(id)
-            model["eventTypes"] = eventsService.getAllEventsTypes()
-            return "events/form"
+            return reRenderForm()
         }
 
         val typeId = form.type!!.toLongOrNull()
             ?: eventsService.findTypeByName(form.type!!)?.id
             ?: throw IllegalArgumentException("Unknown event type: ${form.type}")
 
-        val created = eventsService.createEvent(
-            clubId = id,
-            name = form.name,
-            typeId = typeId,
-            date = form.date!!,
-            location = form.location,
-            description = form.description,
-            ownerUserName = authentication.name
-        )
-        return "redirect:/clubs/$id/events/${created.id}"
+        return try {
+            val created = eventsService.createEvent(
+                clubId = id,
+                name = form.name,
+                typeId = typeId,
+                date = form.date!!,
+                location = form.location,
+                description = form.description,
+                ownerUserName = authentication.name
+            )
+            "redirect:/clubs/$id/events/${created.id}"
+
+        } catch (e: LocationRequiredException) {
+            bindingResult.rejectValue("location", "required", e.message!!)
+            reRenderForm()
+
+        } catch (e: RainingAtLocationException) {
+            bindingResult.rejectValue("location", "raining", e.message!!)
+            reRenderForm()
+        }
     }
+
     @PreAuthorize("@eventSecurity.isOwner(#eventId, authentication.name) or hasRole('ADMIN')")
     @GetMapping("/clubs/{id}/events/{eventId}/edit")
     fun showEditEventForm(@PathVariable id: Long, @PathVariable eventId: Long, model: ModelMap): String {
@@ -112,6 +130,7 @@ class Eventscontroller(private val eventsService: EventsService, private val clu
         model["eventTypes"] = eventsService.getAllEventsTypes()
         return "events/editForm"
     }
+
     @PreAuthorize("@eventSecurity.isOwner(#eventId, authentication.name) or hasRole('ADMIN')")
     @PutMapping("/clubs/{id}/events/{eventId}")
     fun editEvent(
@@ -155,18 +174,18 @@ class Eventscontroller(private val eventsService: EventsService, private val clu
         return "redirect:/clubs/$id/events/${updatedEvent.id}"
     }
 
-@GetMapping("/clubs/{id}/events/{eventId}")
-    fun eventDetails(@PathVariable id: Long,@PathVariable eventId: Long, model: ModelMap): String {
+    @GetMapping("/clubs/{id}/events/{eventId}")
+    fun eventDetails(@PathVariable id: Long, @PathVariable eventId: Long, model: ModelMap): String {
         val event = eventsService.findById(eventId)
-    val eventResponse = EventsResponse(
-        id = event.id,
-        name = event.name,
-        clubId = event.club!!.id,
-        clubName = event.club!!.name,
-        date = event.date,
-        type = event.type!!,
-        location = event.location
-    )
+        val eventResponse = EventsResponse(
+            id = event.id,
+            name = event.name,
+            clubId = event.club!!.id,
+            clubName = event.club!!.name,
+            date = event.date,
+            type = event.type!!,
+            location = event.location
+        )
         model["event"] = eventResponse
         return "events/details"
     }
@@ -175,14 +194,12 @@ class Eventscontroller(private val eventsService: EventsService, private val clu
     @DeleteMapping("/clubs/{id}/events/{eventId}")
     fun deleteEvent(@PathVariable eventId: Long, @PathVariable id: Long): String {
         eventsService.deleteEvent(eventId)
-        return "redirect:/clubs/$id"  // sem /events
+        return "redirect:/clubs/$id"
     }
+
     @PreAuthorize("@eventSecurity.isOwner(#eventId, authentication.name) or hasRole('ADMIN')")
     @GetMapping("/clubs/{id}/events/{eventId}/delete")
-    fun showDeleteConfirmation(
-        @PathVariable eventId: Long,
-        model: ModelMap
-    ): String {
+    fun showDeleteConfirmation(@PathVariable eventId: Long, model: ModelMap): String {
         val event: Event = eventsService.findById(eventId)
         val eventResponse = EventsResponse(
             id = event.id,
@@ -196,5 +213,4 @@ class Eventscontroller(private val eventsService: EventsService, private val clu
         model.addAttribute("event", eventResponse)
         return "events/delete"
     }
-
 }

@@ -10,7 +10,8 @@ import pt.unl.fct.iadi.novaevents.repository.EventTypeRepository
 import pt.unl.fct.iadi.novaevents.repository.UserRepository
 import java.time.LocalDate
 
-
+class LocationRequiredException(message: String) : RuntimeException(message)
+class RainingAtLocationException(message: String) : RuntimeException(message)
 @Service
 class EventsService(
     private val eventRepository: EventRepository,
