@@ -11,6 +11,8 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.security.web.SecurityFilterChain
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter
+import org.springframework.security.web.context.DelegatingSecurityContextRepository
+import org.springframework.security.web.context.HttpSessionSecurityContextRepository
 import org.springframework.security.web.context.RequestAttributeSecurityContextRepository
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository
 import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler
@@ -37,7 +39,14 @@ class SecurityConfig (
     fun securityFilterChain(http: HttpSecurity): SecurityFilterChain {
         http
             .sessionManagement { it.sessionCreationPolicy(SessionCreationPolicy.STATELESS) }
-            .securityContext { it.securityContextRepository(RequestAttributeSecurityContextRepository()) }
+            .securityContext { 
+                it.securityContextRepository(
+                    DelegatingSecurityContextRepository(
+                        HttpSessionSecurityContextRepository(),
+                        RequestAttributeSecurityContextRepository()
+                    )
+                )
+            }
             .requestCache { it.requestCache(CookieRequestCache()) }
             .csrf { csrf ->
                 csrf.csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
