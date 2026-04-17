@@ -20,7 +20,7 @@ class JwtCookieAuthFilter(private val jwtService: JwtService) : OncePerRequestFi
             if (token != null) {
                 val claims = jwtService.validate(token)
                 if (claims != null) {
-                   // @Suppress("UNCHECKED_CAST")
+                    @Suppress("UNCHECKED_CAST")
                     val authorities = (claims["roles"] as List<String>).map { SimpleGrantedAuthority(it) }
                     val context = SecurityContextHolder.createEmptyContext()
                     context.authentication =

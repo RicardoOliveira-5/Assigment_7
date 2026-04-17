@@ -19,18 +19,24 @@ class JwtAuthSuccessHandler(private val jwtService: JwtService) : Authentication
         response: HttpServletResponse?,
         authentication: Authentication?
     ) {
-        val token = jwtService.generate(authentication!!.name,
-            authentication.authorities.map { it.authority })
+        if (request == null || response == null || authentication == null) return
+        
+        val token = jwtService.generate(
+            authentication.name,
+            authentication.authorities.map { it.authority }
+        )
         val cookie = Cookie("jwt", token).apply {
             isHttpOnly = true
             path = "/"
             maxAge = 3600
+            secure = request.isSecure
         }
-        response?.addCookie(cookie)
+        response.addCookie(cookie)
+        
         val savedRequest = requestCache.getRequest(request, response)
-        val redirectUrl = savedRequest?.redirectUrl ?: (request?.contextPath + "/")
+        val redirectUrl = savedRequest?.redirectUrl ?: (request.contextPath + "/")
         requestCache.removeRequest(request, response)
-        response?.sendRedirect(redirectUrl)
+        response.sendRedirect(redirectUrl)
     }
 
 
