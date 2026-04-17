@@ -6,13 +6,11 @@ import jakarta.servlet.http.HttpServletResponse
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.security.core.authority.SimpleGrantedAuthority
 import org.springframework.security.core.context.SecurityContextHolder
-import org.springframework.security.web.context.RequestAttributeSecurityContextRepository
 import org.springframework.stereotype.Component
 import org.springframework.web.filter.OncePerRequestFilter
 
 @Component
 class JwtCookieAuthFilter(private val jwtService: JwtService) : OncePerRequestFilter() {
-    private val securityContextRepository = RequestAttributeSecurityContextRepository()
 
     override fun doFilterInternal(request: HttpServletRequest, response: HttpServletResponse, filterChain: FilterChain) {
         if (SecurityContextHolder.getContext().authentication == null) {
@@ -26,7 +24,6 @@ class JwtCookieAuthFilter(private val jwtService: JwtService) : OncePerRequestFi
                     context.authentication =
                         UsernamePasswordAuthenticationToken(claims["name"], null, authorities)
                     SecurityContextHolder.setContext(context)
-                    securityContextRepository.saveContext(context, request, response)
                 }
             }
         }

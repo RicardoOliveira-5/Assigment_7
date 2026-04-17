@@ -34,7 +34,7 @@ class JwtAuthSuccessHandler(private val jwtService: JwtService) : Authentication
         response.addCookie(cookie)
         
         val savedRequest = requestCache.getRequest(request, response)
-        val redirectUrl = savedRequest?.redirectUrl ?: (request.contextPath + "/")
+        val redirectUrl = savedRequest?.redirectUrl ?: "/clubs"
         requestCache.removeRequest(request, response)
         response.sendRedirect(redirectUrl)
     }
