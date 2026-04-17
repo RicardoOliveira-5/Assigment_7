@@ -18,7 +18,7 @@ import pt.unl.fct.iadi.novaevents.service.LocationRequiredException
 import pt.unl.fct.iadi.novaevents.service.RainingAtLocationException
 import java.time.LocalDate
 @Controller
-class Eventscontroller(
+class EventsController(
     private val eventsService: EventsService,
     private val clubService: ClubsService
 ) {
