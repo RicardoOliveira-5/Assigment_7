@@ -80,6 +80,7 @@ class Eventscontroller(
 
         val typeId = form.type!!.toLongOrNull()
             ?: eventsService.findTypeByName(form.type!!)?.id
+            ?: eventsService.createEventType(form.type!!).id
             ?: throw IllegalArgumentException("Unknown event type: ${form.type}")
 
         return try {

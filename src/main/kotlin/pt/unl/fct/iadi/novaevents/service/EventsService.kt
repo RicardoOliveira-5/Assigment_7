@@ -4,6 +4,7 @@ import jakarta.persistence.EntityNotFoundException
 import org.springframework.stereotype.Service
 import pt.unl.fct.iadi.novaevents.model.AppUser
 import pt.unl.fct.iadi.novaevents.model.Event
+import pt.unl.fct.iadi.novaevents.model.EventType
 import pt.unl.fct.iadi.novaevents.repository.ClubRepository
 import pt.unl.fct.iadi.novaevents.repository.EventRepository
 import pt.unl.fct.iadi.novaevents.repository.EventTypeRepository
@@ -107,5 +108,9 @@ class EventsService(
             (row[0] as Long) to (row[1] as Long)
         }
         return clubIds.associateWith { countMap.getOrDefault(it, 0L) }
+    }
+
+    fun createEventType(name: String): EventType {
+        return eventTypeRepository.save(EventType(name = name))
     }
 }
