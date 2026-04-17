@@ -10,4 +10,9 @@ class EventSecurityBean(private val eventRepository: EventRepository) {
         val event = eventRepository.findById(eventId).orElse(null) ?: return false
         return event.owner?.username == authentication.name
     }
+
+    fun isOwner(eventId: Long, username: String): Boolean {
+        val event = eventRepository.findById(eventId).orElse(null) ?: return false
+        return event.owner?.username == username
+    }
 }

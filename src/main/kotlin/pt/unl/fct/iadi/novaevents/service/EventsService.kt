@@ -18,7 +18,8 @@ class EventsService(
     private val eventRepository: EventRepository,
     private val clubRepository: ClubRepository,
     private val userRepository: UserRepository,
-    private val eventTypeRepository: EventTypeRepository
+    private val eventTypeRepository: EventTypeRepository,
+    private val weatherService: WeatherService? = null
 ) {
     fun getEventsForClub(
         typeId: Long? = null,
@@ -51,13 +52,21 @@ class EventsService(
         ownerUserName: String
     ): Event {
         val owner = userRepository.findByUsername(ownerUserName)
-            ?:  { EntityNotFoundException("User not found") }
+            ?: throw EntityNotFoundException("User not found")
 
         val club = clubRepository.findById(clubId)
             .orElseThrow { EntityNotFoundException("Club not found") }
 
         val type = eventTypeRepository.findById(typeId)
             .orElseThrow { EntityNotFoundException("Event type not found") }
+
+        // Check weather for hiking events
+        if (type.name.equals("Hiking", ignoreCase = true) && location != null && weatherService != null) {
+            val isRaining = weatherService.isRaining(location)
+            if (isRaining == true) {
+                throw RainingAtLocationException("Cannot create hiking event: it is raining at the location")
+            }
+        }
 
         val event = Event(
             name = name,
@@ -66,7 +75,7 @@ class EventsService(
             type = type,
             location = location,
             description = description,
-            owner = owner as AppUser?
+            owner = owner
         )
 
         return eventRepository.save(event)

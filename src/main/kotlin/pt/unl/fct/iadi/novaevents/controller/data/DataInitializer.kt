@@ -45,6 +45,7 @@ class DataInitializer(
         val other = eventTypeRepository.save(EventType(name = "OTHER"))
         val talk = eventTypeRepository.save(EventType(name = "TALK"))
         val meeting = eventTypeRepository.save(EventType(name = "MEETING"))
+        val hiking1 = eventTypeRepository.save(EventType(name = "Hiking"))
 
         //  Clubs
         val chess = clubRepository.save(
