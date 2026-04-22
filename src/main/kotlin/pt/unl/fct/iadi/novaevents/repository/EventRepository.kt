@@ -15,4 +15,6 @@ interface EventRepository : JpaRepository<Event, Long> {
 
     @Query("SELECT e FROM Event e LEFT JOIN FETCH e.type LEFT JOIN FETCH e.club")
     fun findAllWithDetails(): List<Event>
+
+    fun findByName(name: String): Event?
 }
